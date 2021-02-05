@@ -319,7 +319,13 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
                 let mut w = PadAdapter::wrap(&mut w);
                 for variant in variants {
                     let literal = match_on_raw_type(*variant.a());
-                    writeln!(&mut w, "{} => {}::{},", literal, type_name, variant.b())?;
+                    writeln!(
+                        &mut w,
+                        "{} => {}::{},",
+                        literal,
+                        type_name,
+                        enum_variant_name(variant.b())
+                    )?;
                 }
                 writeln!(
                     &mut w,
@@ -465,7 +471,7 @@ fn write_enum(
     {
         let mut w = PadAdapter::wrap(&mut w);
         for variant in variants {
-            writeln!(w, "{},", variant.b())?;
+            writeln!(w, "{},", enum_variant_name(variant.b()))?;
         }
         writeln!(w, "Other({}),", signal_to_rust_type(signal))?;
     }
@@ -519,4 +525,8 @@ fn enum_name(msg: &Message, signal: &Signal) -> String {
         msg.message_name().to_camel_case(),
         signal.name().to_camel_case()
     )
+}
+
+fn enum_variant_name(x: &str) -> String {
+    x.to_camel_case()
 }

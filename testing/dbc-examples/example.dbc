@@ -28,6 +28,7 @@ BO_ 1024 Dolor: 8 Vector__XXX
 
 
 
+VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
 
 VAL_ 1024 Five 2048 "Dolor";
