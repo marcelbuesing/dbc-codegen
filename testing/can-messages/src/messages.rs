@@ -20,6 +20,8 @@ pub enum Messages {
     Bar(Bar),
     /// Amet
     Amet(Amet),
+    /// Dolor
+    Dolor(Dolor),
 }
 
 impl Messages {
@@ -32,6 +34,7 @@ impl Messages {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
             1024 => Messages::Amet(Amet::try_from(payload)?),
+            1028 => Messages::Dolor(Dolor::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -709,6 +712,107 @@ impl<'a> Arbitrary<'a> for Amet {
         let five = u.int_in_range(0..=1)? == 1;
         Amet::new(one, two, three, four, five).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
+}
+
+/// Dolor
+///
+/// - ID: 1028 (0x404)
+/// - Size: 8 bytes
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Dolor {
+    raw: [u8; 8],
+}
+
+impl Dolor {
+    pub const MESSAGE_ID: u32 = 1028;
+
+    /// Construct new Dolor from values
+    pub fn new(one_float: f32) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_one_float(one_float)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
+    /// OneFloat
+    ///
+    /// - Min: 0
+    /// - Max: 130
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn one_float(&self) -> DolorOneFloat {
+        match self.one_float_raw() {
+            x if f32::abs(x - 3_f32) < f32::EPSILON * 3.0 => DolorOneFloat::Dolor,
+            x => DolorOneFloat::Other(x),
+        }
+    }
+
+    /// Get raw value of OneFloat
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 4 bits
+    /// - Factor: 0.5
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn one_float_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<LocalBits>()[0..4].load_le::<u8>();
+
+        let factor = 0.5_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of OneFloat
+    #[inline(always)]
+    pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 130_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1028 });
+        }
+        let factor = 0.5_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<LocalBits>()[0..4].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for Dolor {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for Dolor {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let one_float = 0_f32;
+        Dolor::new(one_float).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+/// Defined values for OneFloat
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum DolorOneFloat {
+    Dolor,
+    Other(f32),
 }
 
 /// This is just to make testing easier

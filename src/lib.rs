@@ -292,8 +292,8 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         let type_name = enum_name(msg, signal);
         let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
             "bool" => |x: f64| format!("{}", (x as i64) == 1),
-            "f32" => |x: f64| format!("{}", x),
-            _ => |x: f64| format!("{}", x as i64),
+            "f32" => |x: f64| format!("x if f32::abs(x - {}_f32) < f32::EPSILON * 3.0", x),
+            _ => |x: f64| format!("{}", x),
         };
 
         writeln!(

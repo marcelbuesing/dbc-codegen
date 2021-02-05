@@ -43,3 +43,10 @@ fn pack_unpack_message2() {
     assert_eq!(result.four_raw(), 3);
     assert_eq!(result.five_raw(), true);
 }
+
+#[test]
+fn float_comparison() {
+    let result = messages::Dolor::new(3.0).unwrap();
+    assert_eq!(result.one_float_raw(), 3.0);
+    assert_eq!(result.one_float(), DolorOneFloat::Dolor);
+}
