@@ -16,6 +16,8 @@ pub enum Messages {
     Foo(Foo),
     /// Bar
     Bar(Bar),
+    /// Dolor
+    Dolor(Dolor),
 }
 
 impl Messages {
@@ -27,6 +29,7 @@ impl Messages {
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
+            1024 => Messages::Dolor(Dolor::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -352,6 +355,93 @@ pub enum BarFour {
     Oner,
     Onest,
     Other(u8),
+}
+
+/// Dolor
+///
+/// - ID: 1024 (0x400)
+/// - Size: 8 bytes
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct Dolor {
+    raw: [u8; 8],
+}
+
+impl Dolor {
+    pub const MESSAGE_ID: u32 = 1024;
+
+    /// Construct new Dolor from values
+    pub fn new(five: f32) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_five(five)?;
+        Ok(res)
+    }
+
+    /// Five
+    ///
+    /// - Min: 0
+    /// - Max: 100.3
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn five(&self) -> DolorFive {
+        match self.five_raw() {
+            2048 => DolorFive::Dolor,
+            x => DolorFive::Other(x),
+        }
+    }
+
+    /// Get raw value of Five
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 4 bits
+    /// - Factor: 10.23
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn five_raw(&self) -> f32 {
+        let signal = u8::unpack_le_bits(&self.raw, 0, 4);
+
+        let factor = 10.23_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of Five
+    #[inline(always)]
+    pub fn set_five(&mut self, value: f32) -> Result<(), CanError> {
+        let factor = 10.23_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        let start_bit = 0;
+        let bits = 4;
+        value.pack_le_bits(&mut self.raw, start_bit, bits);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for Dolor {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+/// Defined values for Five
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum DolorFive {
+    Dolor,
+    Other(f32),
 }
 
 /// This is just to make testing easier
