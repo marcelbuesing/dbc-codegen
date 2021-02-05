@@ -303,7 +303,7 @@ impl Bar {
             1 => BarFour::On,
             2 => BarFour::Oner,
             3 => BarFour::Onest,
-            x => BarFour::Other(x),
+            x => BarFour::Other(self.four_raw()),
         }
     }
 
@@ -385,9 +385,9 @@ impl Dolor {
     /// - Receivers: Vector__XXX
     #[inline(always)]
     pub fn five(&self) -> DolorFive {
-        match self.five_raw() {
-            2048 => DolorFive::Dolor,
-            x => DolorFive::Other(x),
+        match self.five_raw() as i64 {
+            2048i64 => DolorFive::Dolor,
+            x => DolorFive::Other(self.five_raw()),
         }
     }
 

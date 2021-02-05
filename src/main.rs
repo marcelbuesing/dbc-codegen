@@ -292,7 +292,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         let type_name = enum_name(msg, signal);
         let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
             "bool" => |x: f64| format!("{}", (x as i64) == 1),
-            "f32" => |x: f64| format!("{}", x),
+            "f32" => |x: f64| format!("{}i64", x),
             _ => |x: f64| format!("{}", x as i64),
         };
 
@@ -303,15 +303,30 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
             type_name,
         )?;
         {
+            let cast_raw = if signal_to_rust_type(signal).as_str() == "f32" {
+                " as i64"
+            } else {
+                ""
+            };
             let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
+            writeln!(
+                &mut w,
+                "match self.{}_raw(){} {{",
+                field_name(signal.name()),
+                cast_raw
+            )?;
             {
                 let mut w = PadAdapter::wrap(&mut w);
                 for variant in variants {
                     let literal = match_on_raw_type(*variant.a());
                     writeln!(&mut w, "{} => {}::{},", literal, type_name, variant.b())?;
                 }
-                writeln!(&mut w, "x => {}::Other(x),", type_name,)?;
+                writeln!(
+                    &mut w,
+                    "x => {}::Other(self.{}_raw()),",
+                    type_name,
+                    field_name(signal.name())
+                )?;
             }
             writeln!(&mut w, "}}")?;
         }
