@@ -373,7 +373,7 @@ pub enum BarThree {
     Other(u8),
 }
 /// Defined values for Four
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum BarFour {
     Off,
