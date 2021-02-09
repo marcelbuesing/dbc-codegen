@@ -338,7 +338,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
                 }
                 writeln!(
                     &mut w,
-                    "x => {}::Other(self.{}_raw()),",
+                    "x => {}::XOther(self.{}_raw()),",
                     type_name,
                     field_name(signal.name())
                 )?;
@@ -482,7 +482,7 @@ fn write_enum(
         for variant in variants {
             writeln!(w, "{},", enum_variant_name(variant.b()))?;
         }
-        writeln!(w, "Other({}),", signal_to_rust_type(signal))?;
+        writeln!(w, "XOther({}),", signal_to_rust_type(signal))?;
     }
     writeln!(w, "}}")?;
     Ok(())
