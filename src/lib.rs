@@ -401,7 +401,9 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         can_dbc::ByteOrder::BigEndian => format!(
             "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
             typ = signal_to_rust_uint(signal),
-            start = signal.start_bit + 1 - signal.signal_size,
+            start = (signal.start_bit + 1)
+                .checked_sub(signal.signal_size)
+                .ok_or(anyhow!("Overflow signal {:#?}", signal))?,
             end = signal.start_bit + 1,
         ),
     };
@@ -467,7 +469,9 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
             writeln!(
                 &mut w,
                 r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_be(value);"#,
-                start_bit = signal.start_bit + 1 - signal.signal_size,
+                start_bit = (signal.start_bit + 1)
+                    .checked_sub(signal.signal_size)
+                    .ok_or(anyhow!("Overflow signal {:#?}", signal))?,
                 end_bit = signal.start_bit + 1,
             )?;
         }
