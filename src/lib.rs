@@ -261,7 +261,12 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             if message_id != msg.message_id() {
                 return None;
             }
-            let signal = dbc.signal_by_name(*message_id, signal_name).unwrap();
+            let signal = dbc
+                .signal_by_name(*message_id, signal_name)
+                .expect(&format!(
+                    "Value description exists but no matching signal `{}` in message `{}`",
+                    message_id.0, signal_name
+                ));
             Some((signal, value_descriptions))
         } else {
             None
